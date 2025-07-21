@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  username         String    @unique
+  name             String
+  password         String
+  avatarUrl        String?
+  snapsSent        Snap[]    @relation("SnapsSent")
+  snapsReceived    Snap[]    @relation("SnapsReceived")
+  friends          Friend[]  @relation("UserFriends")
+  friendOf         Friend[]  @relation("UserFriendOf")
+  messagesSent     Message[] @relation("MessagesSent")
+  messagesReceived Message[] @relation("MessagesReceived")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Snap {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  imageUrl   String
+  viewed     Boolean  @default(false)
+  expiresAt  DateTime
+  sentAt     DateTime @default(now())
+  sender     User     @relation("SnapsSent", fields: [senderId], references: [id])
+  receiver   User     @relation("SnapsReceived", fields: [receiverId], references: [id])
+}
+
+model Friend {
+  id        String           @id @default(cuid())
+  userId    String
+  friendId  String
+  status    FriendshipStatus @default(PENDING)
+  user      User             @relation("UserFriends", fields: [userId], references: [id])
+  friend    User             @relation("UserFriendOf", fields: [friendId], references: [id])
+  createdAt DateTime         @default(now())
+
+  @@unique([userId, friendId])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  viewed      Boolean   @default(false)
+  delivered   Boolean   @default(false)
+  sentAt      DateTime  @default(now())
+  deliveredAt DateTime?
+  viewedAt    DateTime?
+  sender      User      @relation("MessagesSent", fields: [senderId], references: [id])
+  receiver    User      @relation("MessagesReceived", fields: [receiverId], references: [id])
+}
