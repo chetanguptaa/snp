@@ -83,8 +83,6 @@ wss.on("connection", async function connection(ws: WebSocket, req: any) {
           ws.send(JSON.stringify({ ...payload, selfEcho: true }));
         }
       } catch (err) {
-        console.log("err ", err);
-
         ws.send(JSON.stringify({ error: "Invalid message format" }));
       }
     });
